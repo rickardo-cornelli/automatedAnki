@@ -22,8 +22,6 @@ AUTHORIZATION_ERROR = "Authorization Error"
 UNKNOWN_ERROR = "Unknown Error"
 INVALID_RESPONSE = "Invalid Response"
 VALID_RESPONSE = "Valid Response"
-NOUN = "Noun"
-NOT_NOUN = "Not Noun"
 TIMEOUT = "Timeout"
 REQUEST_EXCEPTION = "Request Exception"
 
@@ -47,12 +45,10 @@ def parse_noun_data(headword, language):
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
 
-
     plural_form = get_plural_form(inflections) if inflections else ""
 
     noun_data = {"word": word, "article": article, "plural_form":plural_form}
     
-    #print(noun_data)
     return noun_data
 
 def get_definitions_and_examples(result_senses):
@@ -68,36 +64,32 @@ def get_definitions_and_examples(result_senses):
 
     return definitions_and_examples
 
-def call_api(url, headers, querystring, language):
+def call_api(url, headers, querystring):
     try: 
         response = requests.get(url, headers=headers, params=querystring, timeout=10)
-        #print(response)
         if (response.status_code == 403):
             return AUTHORIZATION_ERROR
         
         if (response.status_code != 200):
-            #print(f"Request failed with status code {response.status_code}")
             return UNKNOWN_ERROR
         
         response_data = response.json()
 
         if not response_data["results"]:
-            #print(f"No valid response for {base_word} in {language}, verify the spelling of both")
             return INVALID_RESPONSE
-        else:
-            return VALID_RESPONSE, response_data["results"]
+        
+        return VALID_RESPONSE, response_data["results"]
 
     except requests.exceptions.Timeout:
         return TIMEOUT
     except requests.exceptions.RequestException:
         return REQUEST_EXCEPTION
 
+
 def get_definition(word, language="de"):
-    #print(word)
+  
     load_dotenv(dotenv_path='Anki.env')
     base_word = get_base_word(word,language)
-  
-
 
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
@@ -108,20 +100,20 @@ def get_definition(word, language="de"):
         "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
-    result = call_api(url, headers, querystring, language)
+    result = call_api(url, headers, querystring)
 
-    # TODO: extract headwords and map to senses
     entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
-      #  print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
         
         for result in results:
             word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
+
             if(isNoun(headwords[0])):
                 word_entry = parse_noun_data(headwords[0], language)
+        
             word_entry["definitions_and_examples"] = get_definitions_and_examples(result["senses"])
             entries.append(word_entry)
     print(entries)
@@ -137,4 +129,4 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 # Test words in multiple languages
-get_definition("Mann", "de")
+get_definition("femme", "fr")
