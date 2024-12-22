@@ -22,7 +22,44 @@ REQUEST_EXCEPTION = "Request Exception"
 def isNoun(word_response):
     return word_response["results"][0]["headword"]["pos"] == "noun"
 
-def call_api(url, headers, querystring):
+def get_article(gender, language):
+    german_articles = {"feminine": "die", "masculine": "der", "neuter": "das"}
+    french_articles = {"feminine": "la", "masculine": "le"}
+    spanish_articles = {"feminine": "la", "masculine": "el"}
+
+    if(language == "de"):
+        return german_articles.get(gender, "unknown gender")
+    if(language =="es"):
+        return spanish_articles.get(gender, "unknown gender")
+    if(language == "fr"):
+        return french_articles.get(gender, "unknown gender")
+    return "Unsupported language"
+
+def parse_noun_data(response_data, language):
+    
+    headword = response_data[0].get("headword", {})
+    gender = headword.get("gender", "unknown")
+    article = get_article(gender, language)
+    inflections = headword.get("inflections", {})
+
+    plural_form = inflections[1].get("text") if len(inflections) > 1 else ""
+
+    noun_data = {"article": article, "plural_form":plural_form, "definitions": []}
+    
+    defs = []
+    for sense in response_data[0].get("senses", {}):
+        meaning = {}
+        examples = sense.get("examples", [])
+        if examples:
+            meaning["example"] = sense["examples"][0].get("text", "")
+            meaning["definition"] = sense.get("definition", "")
+        defs.append(meaning)
+
+    noun_data["definitions"] = defs
+    print(noun_data)
+    return noun_data
+
+def call_api(url, headers, querystring, language):
     try: 
         response = requests.get(url, headers=headers, params=querystring, timeout=10)
         
@@ -34,13 +71,14 @@ def call_api(url, headers, querystring):
             return UNKNOWN_ERROR
         
         response_data = response.json()
-
         if not response_data["results"]:
             #print(f"No valid response for {base_word} in {language}, verify the spelling of both")
             return INVALID_RESPONSE
         
-        return NOUN if isNoun(response_data) else NOT_NOUN
-
+        if isNoun(response_data):
+            print("it is a noun")
+            parsed_data = parse_noun_data(response_data["results"], language)
+            return NOUN, parsed_data
     except requests.exceptions.Timeout:
         return TIMEOUT
     except requests.exceptions.RequestException:
@@ -56,12 +94,13 @@ def get_definition(word, language="de"):
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
 
     url = "https://lexicala1.p.rapidapi.com/search-entries"
-    querystring = {"text": base_word, "language": "language", "analyzed": "true"}
+    querystring = {"text": base_word, "language": language, "analyzed": "true"}
     headers = {
         "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
-    result = call_api(url, headers, querystring)
+    result = call_api(url, headers, querystring, language)
+    print(f"result is {result}")
     
         
 
@@ -82,4 +121,4 @@ def get_base_form(word, language="de"):
     return lemma
 
 # Test words in multiple languages
-get_definition("hursm", "sv")
+get_definition("klein", "de")
