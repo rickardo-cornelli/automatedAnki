@@ -1,3 +1,4 @@
 *.env
 ankiEnv/
 .DS_Store
+test.py
