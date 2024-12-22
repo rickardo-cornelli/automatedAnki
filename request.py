@@ -46,9 +46,7 @@ def parse_noun_data(headword, language):
     gender = headword.get("gender", "unknown")
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
-    #print(f"headword is {headword}")
 
-    #print(f"inflections is {inflections}")
 
     plural_form = get_plural_form(inflections) if inflections else ""
 
@@ -82,7 +80,7 @@ def call_api(url, headers, querystring, language):
             return UNKNOWN_ERROR
         
         response_data = response.json()
-        #print(response_data)
+
         if not response_data["results"]:
             #print(f"No valid response for {base_word} in {language}, verify the spelling of both")
             return INVALID_RESPONSE
@@ -97,9 +95,8 @@ def call_api(url, headers, querystring, language):
 def get_definition(word, language="de"):
     #print(word)
     load_dotenv(dotenv_path='Anki.env')
-    base_word = get_base_form(word,language)
-    #base_word = word
-    #print(base_word)
+    base_word = get_base_word(word,language)
+  
 
 
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
@@ -128,7 +125,8 @@ def get_definition(word, language="de"):
             word_entry["definitions_and_examples"] = get_definitions_and_examples(result["senses"])
             entries.append(word_entry)
     print(entries)
-def lemmatize_fallback(word, language):
+
+def get_base_word(word, language):
     # Check if spaCy model for the language is loaded
     if language in SPACY_MODELS:
         nlp = SPACY_MODELS[language]
@@ -137,11 +135,6 @@ def lemmatize_fallback(word, language):
             return token.lemma_
     else:
         return f"spaCy model not available for language '{language}'"
-
-def get_base_form(word, language="de"):
-    # Try the API first
-    lemma = lemmatize_fallback(word, language)
-    return lemma
 
 # Test words in multiple languages
 get_definition("Mann", "de")
