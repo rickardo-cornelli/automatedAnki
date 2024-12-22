@@ -34,10 +34,15 @@ def get_article(gender, language):
     articles = LANGUAGE_ARTICLES.get(language, {})
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
 
-
+def get_plural_form(inflections):
+    plural_form = ""
+    for inflection in inflections:
+        if(inflection["number"] == "plural"):
+            plural_form = inflection["text"]
+    return plural_form
 
 def parse_noun_data(headword, language):
-    
+    word = headword["text"]
     gender = headword.get("gender", "unknown")
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
@@ -45,9 +50,9 @@ def parse_noun_data(headword, language):
 
     #print(f"inflections is {inflections}")
 
-    plural_form = inflections[1].get("text") if inflections and len(inflections) > 1 else ""
+    plural_form = get_plural_form(inflections) if inflections else ""
 
-    noun_data = {"article": article, "plural_form":plural_form, "definitions": []}
+    noun_data = {"word": word, "article": article, "plural_form":plural_form}
     
     #print(noun_data)
     return noun_data
@@ -112,7 +117,7 @@ def get_definition(word, language="de"):
     entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
-        print(response_results)
+      #  print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
         
         for result in results:
@@ -122,7 +127,7 @@ def get_definition(word, language="de"):
                 word_entry = parse_noun_data(headwords[0], language)
             word_entry["definitions_and_examples"] = get_definitions_and_examples(result["senses"])
             entries.append(word_entry)
-
+    print(entries)
 def lemmatize_fallback(word, language):
     # Check if spaCy model for the language is loaded
     if language in SPACY_MODELS:
@@ -139,4 +144,4 @@ def get_base_form(word, language="de"):
     return lemma
 
 # Test words in multiple languages
-get_definition("rival", "fr")
+get_definition("Mann", "de")
