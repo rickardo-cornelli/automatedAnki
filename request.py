@@ -34,33 +34,36 @@ def get_article(gender, language):
     articles = LANGUAGE_ARTICLES.get(language, {})
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
 
+
+
 def parse_noun_data(headword, language):
     
     gender = headword.get("gender", "unknown")
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
-    print(f"headword is {headword}")
+    #print(f"headword is {headword}")
 
-    print(f"inflections is {inflections}")
+    #print(f"inflections is {inflections}")
 
     plural_form = inflections[1].get("text") if inflections and len(inflections) > 1 else ""
 
     noun_data = {"article": article, "plural_form":plural_form, "definitions": []}
     
-    defs = []
-    for sense in response_data[0].get("senses", {}):
-        meaning = {}
-        examples = sense.get("examples", [])
-        if examples:
-            meaning["example"] = sense["examples"][0].get("text", "")
-            meaning["definition"] = sense.get("definition", "")
-        defs.append(meaning)
-
-    noun_data["definitions"] = defs
-    print(noun_data)
+    #print(noun_data)
     return noun_data
 
+def get_definitions_and_examples(result_senses):
+    definitions_and_examples = []
+    for sense in result_senses:
+        definition = sense.get('definition')
+        examples = sense.get('examples', [])
 
+        definitions_and_examples.append({
+            'definition': definition,
+            'examples': examples[0]["text"] if examples else ""
+        })
+
+    return definitions_and_examples
 
 def call_api(url, headers, querystring, language):
     try: 
@@ -87,11 +90,12 @@ def call_api(url, headers, querystring, language):
         return REQUEST_EXCEPTION
 
 def get_definition(word, language="de"):
-    print(word)
+    #print(word)
     load_dotenv(dotenv_path='Anki.env')
     base_word = get_base_form(word,language)
-    print(base_word)
-    answers = []
+    #base_word = word
+    #print(base_word)
+
 
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
@@ -103,17 +107,21 @@ def get_definition(word, language="de"):
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
     result = call_api(url, headers, querystring, language)
+
+    # TODO: extract headwords and map to senses
+    entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
+        print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
+        
         for result in results:
+            word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
-            for headword in headwords:
-                if(isNoun(headword)):
-                    print(f"{headword} is noun")
-                else:
-                    print(f"{headword} is not noun")
-            print(result["senses"])
+            if(isNoun(headwords[0])):
+                word_entry = parse_noun_data(headwords[0], language)
+            word_entry["definitions_and_examples"] = get_definitions_and_examples(result["senses"])
+            entries.append(word_entry)
 
 def lemmatize_fallback(word, language):
     # Check if spaCy model for the language is loaded
