@@ -30,22 +30,28 @@ def get_definition(word, language="de"):
         "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
+    try:
+        response = requests.get(url, headers=headers, params=querystring, timeout=10)
+        if(response.status_code == 200):
+            response_data = response.json()
 
-    response = requests.get(url, headers=headers, params=querystring, timeout=10)
-    if(response.status_code == 200):
-        response_data = response.json()
-
-        if response_data["results"]:
-            if(isNoun(response_data)):
-                print(f"{base_word} is a noun")
+            if response_data["results"]:
+                if(isNoun(response_data)):
+                    print(f"{base_word} is a noun")
+                else:
+                    print(f"{base_word} is not a noun")
             else:
-                print(f"{base_word} is not a noun")
+                print(f"No valid response for {base_word} in {language}, verify the spelling of both")
+        elif(response.status_code == 403):
+            print("Status code 403, verify that you have set up your API key correctly")
         else:
-            print(f"No valid response for {base_word} in {language}, verify the spelling of both")
-    elif(response.status_code == 403):
-        print("Status code 403, verify that you have set up your API key correctly")
-    else:
-        print(f"Request failed with status code {response.status_code}")
+            print(f"Request failed with status code {response.status_code}")
+            
+    except requests.exceptions.Timeout as e:
+        print("Timeout exception", e)
+    except requests.exceptions.RequestException as e:
+        print("Exception raised", e)
+
     return None  # Indicate failure
 
 
