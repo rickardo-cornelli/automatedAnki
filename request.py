@@ -21,24 +21,27 @@ LANGUAGE_ARTICLES = {
 AUTHORIZATION_ERROR = "Authorization Error"
 UNKNOWN_ERROR = "Unknown Error"
 INVALID_RESPONSE = "Invalid Response"
+VALID_RESPONSE = "Valid Response"
 NOUN = "Noun"
 NOT_NOUN = "Not Noun"
 TIMEOUT = "Timeout"
 REQUEST_EXCEPTION = "Request Exception"
 
-def isNoun(word_response):
-    return word_response["results"][0]["headword"]["pos"] == "noun"
+def isNoun(headword):
+    return headword["pos"] == "noun"
 
 def get_article(gender, language):
     articles = LANGUAGE_ARTICLES.get(language, {})
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
 
-def parse_noun_data(response_data, language):
+def parse_noun_data(headword, language):
     
-    headword = response_data[0].get("headword", {})
     gender = headword.get("gender", "unknown")
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
+    print(f"headword is {headword}")
+
+    print(f"inflections is {inflections}")
 
     plural_form = inflections[1].get("text") if inflections and len(inflections) > 1 else ""
 
@@ -57,10 +60,12 @@ def parse_noun_data(response_data, language):
     print(noun_data)
     return noun_data
 
+
+
 def call_api(url, headers, querystring, language):
     try: 
         response = requests.get(url, headers=headers, params=querystring, timeout=10)
-        
+        #print(response)
         if (response.status_code == 403):
             return AUTHORIZATION_ERROR
         
@@ -69,14 +74,13 @@ def call_api(url, headers, querystring, language):
             return UNKNOWN_ERROR
         
         response_data = response.json()
+        #print(response_data)
         if not response_data["results"]:
             #print(f"No valid response for {base_word} in {language}, verify the spelling of both")
             return INVALID_RESPONSE
-        
-        if isNoun(response_data):
-            print("it is a noun")
-            parsed_data = parse_noun_data(response_data["results"], language)
-            return NOUN, parsed_data
+        else:
+            return VALID_RESPONSE, response_data["results"]
+
     except requests.exceptions.Timeout:
         return TIMEOUT
     except requests.exceptions.RequestException:
@@ -87,6 +91,7 @@ def get_definition(word, language="de"):
     load_dotenv(dotenv_path='Anki.env')
     base_word = get_base_form(word,language)
     print(base_word)
+    answers = []
 
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
@@ -98,8 +103,17 @@ def get_definition(word, language="de"):
         "X-RapidAPI-Host": RAPIDAPI_HOST
     }
     result = call_api(url, headers, querystring, language)
-    print(f"result is {result}")
-    
+    if(isinstance(result, tuple)):
+        response_results = result[1]
+        results = response_results if (isinstance(response_results, list)) else [response_results]
+        for result in results:
+            headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
+            for headword in headwords:
+                if(isNoun(headword)):
+                    print(f"{headword} is noun")
+                else:
+                    print(f"{headword} is not noun")
+            print(result["senses"])
 
 def lemmatize_fallback(word, language):
     # Check if spaCy model for the language is loaded
@@ -117,4 +131,4 @@ def get_base_form(word, language="de"):
     return lemma
 
 # Test words in multiple languages
-get_definition("klein", "de")
+get_definition("rival", "fr")
