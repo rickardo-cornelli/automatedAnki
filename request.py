@@ -11,6 +11,13 @@ SPACY_MODELS = {
     "sv": spacy.load('sv_core_news_sm'),
     "fr": spacy.load('fr_core_news_sm')
 }
+# the articles in the languages currently supported
+LANGUAGE_ARTICLES = {
+    "de": {"feminine": "die", "masculine": "der", "neuter": "das"},
+    "fr": {"feminine": "la", "masculine": "le"},
+    "es": {"feminine": "la", "masculine": "el"},
+}
+
 AUTHORIZATION_ERROR = "Authorization Error"
 UNKNOWN_ERROR = "Unknown Error"
 INVALID_RESPONSE = "Invalid Response"
@@ -23,17 +30,8 @@ def isNoun(word_response):
     return word_response["results"][0]["headword"]["pos"] == "noun"
 
 def get_article(gender, language):
-    german_articles = {"feminine": "die", "masculine": "der", "neuter": "das"}
-    french_articles = {"feminine": "la", "masculine": "le"}
-    spanish_articles = {"feminine": "la", "masculine": "el"}
-
-    if(language == "de"):
-        return german_articles.get(gender, "unknown gender")
-    if(language =="es"):
-        return spanish_articles.get(gender, "unknown gender")
-    if(language == "fr"):
-        return french_articles.get(gender, "unknown gender")
-    return "Unsupported language"
+    articles = LANGUAGE_ARTICLES.get(language, {})
+    return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
 
 def parse_noun_data(response_data, language):
     
@@ -42,7 +40,7 @@ def parse_noun_data(response_data, language):
     article = get_article(gender, language)
     inflections = headword.get("inflections", {})
 
-    plural_form = inflections[1].get("text") if len(inflections) > 1 else ""
+    plural_form = inflections[1].get("text") if inflections and len(inflections) > 1 else ""
 
     noun_data = {"article": article, "plural_form":plural_form, "definitions": []}
     
@@ -102,8 +100,6 @@ def get_definition(word, language="de"):
     result = call_api(url, headers, querystring, language)
     print(f"result is {result}")
     
-        
-
 
 def lemmatize_fallback(word, language):
     # Check if spaCy model for the language is loaded
