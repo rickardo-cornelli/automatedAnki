@@ -23,7 +23,11 @@ LANGUAGE_REFLEXIVE_PRONOUN = {
 }
 
 LANGUAGE_CONJUGATION_HELP_VERB = {
-    "de" : {"Perfekt mit sein": "ist", "Perfekt mit haben": "habe"}
+    "de" : {"Perfekt mit sein": "sein", "Perfekt mit haben": "haben"}
+}
+
+LANGUAGE_HELP_VERB_CONJUGATION = {
+    "de" : {"sein": {"1st": "bin", "2nd": "bist", "3rd": "ist", "haben": {"1st":"habe", "2nd": "hast", "3rd": "ist"}}}
 }
 
 AUTHORIZATION_ERROR = "Authorization Error"
@@ -51,6 +55,15 @@ def get_help_verb(language, conjugates_with):
     help_verbs = LANGUAGE_CONJUGATION_HELP_VERB.get(language, {})
     return help_verbs.get(conjugates_with, "unknown help verb") if help_verbs else "Languages currently not supported"
 
+def get_help_verb_conjugation(help_verb, language, person):
+    help_verbs = LANGUAGE_CONJUGATION_HELP_VERB.get(language)
+    
+    if help_verbs is None:
+        return "Language currently not supported"
+    
+    help_verb_conjugations = help_verbs.get(help_verb, {})
+    return help_verb_conjugations.get(person, "unknown help verb")
+
 def get_plural_form(inflections):
     plural_form = ""
     for inflection in inflections:
@@ -58,7 +71,7 @@ def get_plural_form(inflections):
             plural_form = inflection["text"]
     return plural_form
 
-def parse_noun_data(headword, language):
+def parse_noun_properties(headword, language):
     word = headword["text"]
     gender = headword.get("gender", "unknown")
     article = get_article(gender, language)
@@ -69,13 +82,30 @@ def parse_noun_data(headword, language):
     noun_data = {"word": word, "article": article, "plural_form":plural_form}
     
     return noun_data
+# TODO: fix conjugations parsed are {'preterit': 'schlich', 'pastParticiple': 'unknown help verb geschlichen'} 
+# I think it is because I call the wrong dictionary in get help verb conjugation
+def get_verb_conjugations(inflections, valency, help_verb):
+    conjugations = {}
+    print(f"inflections is {inflections} \n")
+    for inflection in inflections:
+        conjugated_verb = inflection["text"]
+        if(inflection["tense"] == 'preterit'):
+            conjugations["preterit"] = conjugated_verb + " " + get_reflexive_article(inflection["person"], "de") if valency == 'reflexive' else conjugated_verb
+        if(inflection["tense"] == 'present'):
+            conjugations["present"] = get_reflexive_article(inflection["person"], "de") + " " + conjugated_verb if valency == 'reflexive' else conjugated_verb
+        if(inflection["tense"] == 'pastParticiple'):
+            conjugated_help_verb = get_help_verb_conjugation(help_verb, "de", "3rd")
+            conjugations["pastParticiple"] = conjugated_help_verb + " " + get_reflexive_article("3rd", "de") + " " + conjugated_verb if valency == 'reflexive' else conjugated_help_verb + " " + conjugated_verb
+    print(f"conjugations parsed are {conjugations} \n")
+    return conjugations
 
-def get_verb_conjugation(headword, sense, language):
-    """
-    Gets the verb conjugations of a verb
+"""
+    Verb conjugations are found in inflections, a key-value pair in headword
     valency indicates whether it conjugates with have or be in French, Spanish, and German
     Valency and the help verb can be found in either headword or in sense
-    """
+"""
+def parse_verb_properties(headword, sense, language):
+   
     word = headword["text"]
     # sleichen reflexive -> sich sleichen valen
     valency = headword.get("valency") or sense.get("valency")
@@ -83,8 +113,13 @@ def get_verb_conjugation(headword, sense, language):
     # 
     conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
     help_verb = get_help_verb(language, conjugates_with)
+
+    inflections = headword.get("inflections", [])
+    print(inflections)
+    verb_conjugations = get_verb_conjugations(inflections, valency, help_verb)
+    print(verb_conjugations)
+    return {"word": word, "valency": valency, "help_verb": help_verb, "conjugations": verb_conjugations}
     
-    return {}
 def get_definition_and_example(sense):
     definitions_and_examples = []
     definition = sense.get('definition')
@@ -138,7 +173,7 @@ def get_definition(word, language="de"):
     entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
-        print(response_results)
+       # print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
         
         for result in results:
@@ -146,9 +181,9 @@ def get_definition(word, language="de"):
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
             for sense in result["senses"]:
                 if(isNoun(headwords[0])):
-                    word_entry = parse_noun_data(headwords[0], language)
+                    word_entry = parse_noun_properties(headwords[0], language)
                 if(isVerb(headwords[0])):
-                    word_entry = get_verb_conjugation(headwords[0], sense, language)
+                    word_entry = parse_verb_properties(headwords[0], sense, language)
 
                 word_entry["definitions_and_examples"] = get_definition_and_example(sense)
                 entries.append(word_entry)
