@@ -71,13 +71,20 @@ def parse_noun_data(headword, language):
     return noun_data
 
 def get_verb_conjugation(headword, sense, language):
+    """
+    Gets the verb conjugations of a verb
+    valency indicates whether it conjugates with have or be in French, Spanish, and German
+    Valency and the help verb can be found in either headword or in sense
+    """
     word = headword["text"]
-    # sleichen reflexive -> sich sleichen
-    word = get_reflexive_article("3rd", language) + word if sense["valency"] == "reflexive" else word
-    conjugates_with = sense["range_of_application"]
+    # sleichen reflexive -> sich sleichen valen
+    valency = headword.get("valency") or sense.get("valency")
+    word = get_reflexive_article("3rd", language) + word if valency == "reflexive" else word
+    # 
+    conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
     help_verb = get_help_verb(language, conjugates_with)
     
-    return 1
+    return {}
 def get_definition_and_example(sense):
     definitions_and_examples = []
     definition = sense.get('definition')
