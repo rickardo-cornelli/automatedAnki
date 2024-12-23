@@ -17,6 +17,14 @@ LANGUAGE_ARTICLES = {
     "fr": {"feminine": "la", "masculine": "le"},
     "es": {"feminine": "la", "masculine": "el"},
 }
+LANGUAGE_REFLEXIVE_PRONOUN = {
+    "de": {"1st":"mich", "2nd":"dich", "3rd":"sich"},
+    "fr": {"1st": "me", "2nd": "te", "3rd":"se"}
+}
+
+LANGUAGE_CONJUGATION_HELP_VERB = {
+    "de" : {"Perfekt mit sein": "ist", "Perfekt mit haben": "habe"}
+}
 
 AUTHORIZATION_ERROR = "Authorization Error"
 UNKNOWN_ERROR = "Unknown Error"
@@ -28,9 +36,20 @@ REQUEST_EXCEPTION = "Request Exception"
 def isNoun(headword):
     return headword["pos"] == "noun"
 
+def isVerb(headword):
+    return headword["pos"] == "verb"
+
 def get_article(gender, language):
     articles = LANGUAGE_ARTICLES.get(language, {})
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
+
+def get_reflexive_article(person, language):
+    articles = LANGUAGE_REFLEXIVE_PRONOUN.get(language, {})
+    return articles.get(person, "unknown article") if articles else "Languages currently not supported"
+
+def get_help_verb(language, conjugates_with):
+    help_verbs = LANGUAGE_CONJUGATION_HELP_VERB.get(language, {})
+    return help_verbs.get(conjugates_with, "unknown help verb") if help_verbs else "Languages currently not supported"
 
 def get_plural_form(inflections):
     plural_form = ""
@@ -51,16 +70,23 @@ def parse_noun_data(headword, language):
     
     return noun_data
 
-def get_definitions_and_examples(result_senses):
+def get_verb_conjugation(headword, sense, language):
+    word = headword["text"]
+    # sleichen reflexive -> sich sleichen
+    word = get_reflexive_article("3rd", language) + word if sense["valency"] == "reflexive" else word
+    conjugates_with = sense["range_of_application"]
+    help_verb = get_help_verb(language, conjugates_with)
+    
+    return 1
+def get_definition_and_example(sense):
     definitions_and_examples = []
-    for sense in result_senses:
-        definition = sense.get('definition')
-        examples = sense.get('examples', [])
+    definition = sense.get('definition')
+    examples = sense.get('examples', [])
 
-        definitions_and_examples.append({
-            'definition': definition,
-            'examples': examples[0]["text"] if examples else ""
-        })
+    definitions_and_examples.append({
+        'definition': definition,
+        'examples': examples[0]["text"] if examples else ""
+    })
 
     return definitions_and_examples
 
@@ -105,17 +131,20 @@ def get_definition(word, language="de"):
     entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
+        print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
         
         for result in results:
             word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
+            for sense in result["senses"]:
+                if(isNoun(headwords[0])):
+                    word_entry = parse_noun_data(headwords[0], language)
+                if(isVerb(headwords[0])):
+                    word_entry = get_verb_conjugation(headwords[0], sense, language)
 
-            if(isNoun(headwords[0])):
-                word_entry = parse_noun_data(headwords[0], language)
-        
-            word_entry["definitions_and_examples"] = get_definitions_and_examples(result["senses"])
-            entries.append(word_entry)
+                word_entry["definitions_and_examples"] = get_definition_and_example(sense)
+                entries.append(word_entry)
     print(entries)
 
 def get_base_word(word, language):
@@ -129,4 +158,4 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 # Test words in multiple languages
-get_definition("femme", "fr")
+get_definition("schleichen", "de")
