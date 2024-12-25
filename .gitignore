@@ -1,5 +1,14 @@
+# virtual environment and api-key file
 *.env
 ankiEnv/
+# macOS stuff
 .DS_Store
+
+
+# python cache 
+__pycache__/
+*.pyc
+
+# test files
 test.py
 test/
