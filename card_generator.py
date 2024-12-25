@@ -1,49 +1,49 @@
 
-# [{'word': 'Kind', 'type': 'noun', 'article': 'das', 'plural_form': 'Kinder', 'definitions_and_examples': [{'definition': 'junger Mensch im Alter von 0 bis etwa 12 Jahren', 'examples': 'Die Kinder spielen im Hof.'}]}, 
-#  {'word': 'Kind', 'type': 'noun', 'article': 'das', 'plural_form': 'Kinder', 'definitions_and_examples': [{'definition': 'noch nicht geborener Mensch', 'examples': 'Sie erwartet / bekommt ein Kind.'}]}, 
-#  {'word': 'Kind', 'type': 'noun', 'article': 'das', 'plural_form': 'Kinder', 'definitions_and_examples': [{'definition': 'Tochter oder Sohn als unmittelbarer Nachkomme', 'examples': 'Ich bin selbst ein adoptiertes / uneheliches Kind.'}]}]
+from word_processor import get_base_word_in_sentence
 
-def generate_card(entry, deck_name):
+def highlight_word(word):
+    return f"<span style='color: lightgreen;'>{word}</span>"
+
+# fix: for the example "the kinder spielen im hof", i get : "Example: Die Kind spielen im Hof."
+def highlight_word_in_example(word, example_sentence, language):
+
+   
+    if(not example_sentence):
+        highlighted_word = highlight_word(word)
+        return highlighted_word
+    
+    else:
+        word_to_highlight_in_sentence = get_base_word_in_sentence(example_sentence, word, language)
+    
+        highlighted_example = example_sentence.replace(
+            word_to_highlight_in_sentence, highlight_word(word_to_highlight_in_sentence)
+        )
+    return highlighted_example
+
+def generate_card(entry, deck_name, language):
     word = entry["word"]
-    word_with_article = entry["article"] + " " + entry["word"]
+    
 
     definition = entry["definition_and_example"]["definition"]
     # there might not be an example
     example = entry["definition_and_example"].get("example", "")
+
+    example_with_word_highlighted = highlight_word_in_example(word, example, language)
+
+    word = highlight_word(word)
+    if entry["type"] == "noun":
+        word = highlight_word(entry["article"]) + " " + word
 
     
     return {
         "deckName": deck_name,
         "modelName": "Basic",
         "fields": {
-            "Front": f"Example: {example_with_highlight}",
-            "Back": f"Definition: {definition}",
+            "Front": f"{example_with_word_highlighted}",
+            "Back": f"{word} = {definition}",
         },
         "tags": ["language", language],
         "options": {
             "allowDuplicate": False,
         },
     }
-# def generate_card(entry, deck_name):
-#     """
-#     Converts a parsed word entry into an Anki card dictionary.
-#     """
-#     word = entry["word"]
-#     definition = entry["definition"]
-#     example = entry["example"]
-
-#     # Highlight the word in the example sentence
-#     example_with_highlight = example.replace(word, f"<span class='highlight'>{word}</span>")
-
-#     return {
-#         "deckName": deck_name,
-#         "modelName": "Basic",
-#         "fields": {
-#             "Front": f"Example: {example_with_highlight}",
-#             "Back": f"Definition: {definition}",
-#         },
-#         "tags": ["language", language],
-#         "options": {
-#             "allowDuplicate": False,
-#         },
-#     }

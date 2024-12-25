@@ -69,7 +69,6 @@ def get_reflexive_article(person, language):
     return articles.get(person, "unknown article") if articles else "Languages currently not supported"
 
 def get_help_verb(language, conjugates_with):
-    print(f"verb conjugates with {conjugates_with} \n")
     help_verbs = LANGUAGE_CONJUGATION_HELP_VERB.get(language, {})
     return help_verbs.get(conjugates_with, "unknown help verb") if help_verbs else "Languages currently not supported"
 
@@ -204,7 +203,7 @@ def get_definition(word, language="de"):
         
         response_results = result[1]
         results = response_results if (isinstance(response_results, list)) else [response_results]
-        print(results)
+
         for result in results:
             word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
@@ -222,8 +221,7 @@ def get_base_word(word, language):
     else:
         return f"spaCy model not available for language '{language}'"
 
-
-def find_base_word_in_sentence(sentence, base_word, language):
+def get_base_word_in_sentence(sentence, base_word, language):
     if language in SPACY_MODELS:
         nlp = SPACY_MODELS[language]
         doc = nlp(sentence)
