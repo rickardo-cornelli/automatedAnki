@@ -70,6 +70,7 @@ def get_reflexive_article(person, language):
     return articles.get(person, "unknown article") if articles else "Languages currently not supported"
 
 def get_help_verb(language, conjugates_with):
+    print(f"verb conjugates with {conjugates_with} \n")
     help_verbs = LANGUAGE_CONJUGATION_HELP_VERB.get(language, {})
     return help_verbs.get(conjugates_with, "unknown help verb") if help_verbs else "Languages currently not supported"
 
@@ -99,7 +100,7 @@ def parse_noun_properties(headword, language):
 
     plural_form = get_plural_form(inflections) if inflections else ""
 
-    noun_data = {"word": word, "article": article, "plural_form":plural_form}
+    noun_data = {"word": word, "type":"noun", "article": article, "plural_form":plural_form}
     
     return noun_data
 
@@ -110,10 +111,11 @@ def get_verb_conjugations(inflections, valency, help_verb):
     for inflection in inflections:
         
         conjugated_verb = inflection["text"]
-        reflexive_article = get_reflexive_article(inflection["person"], "de") 
+
+        person = inflection.get("person", "3rd")
+        reflexive_article = get_reflexive_article(person, "de") 
 
         if(inflection["tense"] == 'preterit'):
-            reflexive_article = get_reflexive_article(inflection["person"], "de") 
             conjugations["preterit"] = conjugated_verb + " " + reflexive_article if valency == 'reflexive' else conjugated_verb
         if(inflection["tense"] == 'present'):
             conjugations["present"] = reflexive_article + " " + conjugated_verb if valency == 'reflexive' else conjugated_verb
@@ -135,7 +137,7 @@ def parse_verb_properties(headword, sense, language):
     valency = headword.get("valency") or sense.get("valency")
     word = get_reflexive_article("3rd", language) + word if valency == "reflexive" else word
     
-    # only German verbs have conjugations included in the Lexicala API
+    # only German verbs have verb conjugations included in the Lexicala API
     if language == 'de':
         conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
         help_verb = get_help_verb(language, conjugates_with)
@@ -144,7 +146,7 @@ def parse_verb_properties(headword, sense, language):
     else:
         help_verb = None
         verb_conjugations = {}
-    return {"word": word, "valency": valency, "help_verb": help_verb, "conjugations": verb_conjugations}
+    return {"word": word, "type": "verb", "valency": valency, "help_verb": help_verb, "conjugations": verb_conjugations}
     
 
 def parse_entry(headword, sense, language):
@@ -200,6 +202,7 @@ def get_definition(word, language="de"):
 
     entries = []
     if(isinstance(result, tuple)):
+        
         response_results = result[1]
         results = response_results if (isinstance(response_results, list)) else [response_results]
         print(results)
@@ -209,6 +212,7 @@ def get_definition(word, language="de"):
             for sense in result["senses"]:
                 word_entry = parse_entry(headwords[0], sense, language)
                 entries.append(word_entry)
+        
 
 def get_base_word(word, language):
     # Check if spaCy model for the language is loaded
@@ -221,4 +225,4 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 # Test words in multiple languages
-get_definition("beau", "fr")
+get_definition("lernen", "de")
