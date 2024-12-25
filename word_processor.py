@@ -54,16 +54,15 @@ def get_article(gender, language):
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
 
 def get_definition_and_example(sense):
-    definitions_and_examples = []
     definition = sense.get('definition')
     examples = sense.get('examples', [])
 
-    definitions_and_examples.append({
+    definition_and_example = {
         'definition': definition,
-        'examples': examples[0]["text"] if examples else ""
-    })
+        'example': examples[0]["text"] if examples else ""
+    }
 
-    return definitions_and_examples
+    return definition_and_example
 
 def get_reflexive_article(person, language):
     articles = LANGUAGE_REFLEXIVE_PRONOUN.get(language, {})
@@ -159,7 +158,7 @@ def parse_entry(headword, sense, language):
         print("havent fixed adjective support yet")
     else:
         print(f"unidentified PoS: {headword["pos"]}")
-    word_entry["definitions_and_examples"] = get_definition_and_example(sense)
+    word_entry["definition_and_example"] = get_definition_and_example(sense)
     return word_entry
 
 # returns a token, and if succesful: also returns the response
@@ -212,10 +211,9 @@ def get_definition(word, language="de"):
             for sense in result["senses"]:
                 word_entry = parse_entry(headwords[0], sense, language)
                 entries.append(word_entry)
-        
+    return entries
 
 def get_base_word(word, language):
-    # Check if spaCy model for the language is loaded
     if language in SPACY_MODELS:
         nlp = SPACY_MODELS[language]
         doc = nlp(word)
@@ -224,5 +222,14 @@ def get_base_word(word, language):
     else:
         return f"spaCy model not available for language '{language}'"
 
-# Test words in multiple languages
-get_definition("lernen", "de")
+
+def find_base_word_in_sentence(sentence, base_word, language):
+    if language in SPACY_MODELS:
+        nlp = SPACY_MODELS[language]
+        doc = nlp(sentence)
+
+        for token in doc:
+            if token.lemma_ == base_word:
+                return token.text
+    
+    return None
