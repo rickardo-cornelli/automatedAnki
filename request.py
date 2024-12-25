@@ -19,7 +19,8 @@ LANGUAGE_ARTICLES = {
 }
 LANGUAGE_REFLEXIVE_PRONOUN = {
     "de": {"1st":"mich", "2nd":"dich", "3rd":"sich"},
-    "fr": {"1st": "me", "2nd": "te", "3rd":"se"}
+    "fr": {"1st": "me", "2nd": "te", "3rd":"se"},
+    "es": {"1st": "me", "2nd": "te", "3rd": "se"}
 }
 
 LANGUAGE_CONJUGATION_HELP_VERB = {
@@ -27,6 +28,7 @@ LANGUAGE_CONJUGATION_HELP_VERB = {
 }
 
 LANGUAGE_HELP_VERB_CONJUGATION = {
+    "fr" : {"être": {"1st":"suis", "2nd":"es", "3rd": "est"}, "avoir": {"1st":"ai", "2nd": "as", "3rd":"a"}},
     "de" : {"sein": {"1st": "bin", "2nd": "bist", "3rd": "ist", "haben": {"1st":"habe", "2nd": "hast", "3rd": "ist"}}}
 }
 
@@ -82,21 +84,26 @@ def parse_noun_properties(headword, language):
     noun_data = {"word": word, "article": article, "plural_form":plural_form}
     
     return noun_data
+
 # TODO: fix conjugations parsed are {'preterit': 'schlich', 'pastParticiple': 'unknown help verb geschlichen'} 
 # I think it is because I call the wrong dictionary in get help verb conjugation
 def get_verb_conjugations(inflections, valency, help_verb):
     conjugations = {}
     print(f"inflections is {inflections} \n")
     for inflection in inflections:
+        
         conjugated_verb = inflection["text"]
+        reflexive_article = get_reflexive_article(inflection["person"], "de") 
+
         if(inflection["tense"] == 'preterit'):
-            conjugations["preterit"] = conjugated_verb + " " + get_reflexive_article(inflection["person"], "de") if valency == 'reflexive' else conjugated_verb
+            reflexive_article = get_reflexive_article(inflection["person"], "de") 
+            conjugations["preterit"] = conjugated_verb + " " + reflexive_article if valency == 'reflexive' else conjugated_verb
         if(inflection["tense"] == 'present'):
-            conjugations["present"] = get_reflexive_article(inflection["person"], "de") + " " + conjugated_verb if valency == 'reflexive' else conjugated_verb
+            conjugations["present"] = reflexive_article + " " + conjugated_verb if valency == 'reflexive' else conjugated_verb
         if(inflection["tense"] == 'pastParticiple'):
             conjugated_help_verb = get_help_verb_conjugation(help_verb, "de", "3rd")
-            conjugations["pastParticiple"] = conjugated_help_verb + " " + get_reflexive_article("3rd", "de") + " " + conjugated_verb if valency == 'reflexive' else conjugated_help_verb + " " + conjugated_verb
-    print(f"conjugations parsed are {conjugations} \n")
+            conjugations["pastParticiple"] = conjugated_help_verb + " " + reflexive_article + " " + conjugated_verb if valency == 'reflexive' else conjugated_help_verb + " " + conjugated_verb
+
     return conjugations
 
 """
@@ -110,14 +117,16 @@ def parse_verb_properties(headword, sense, language):
     # sleichen reflexive -> sich sleichen valen
     valency = headword.get("valency") or sense.get("valency")
     word = get_reflexive_article("3rd", language) + word if valency == "reflexive" else word
-    # 
-    conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
-    help_verb = get_help_verb(language, conjugates_with)
-
-    inflections = headword.get("inflections", [])
-    print(inflections)
-    verb_conjugations = get_verb_conjugations(inflections, valency, help_verb)
-    print(verb_conjugations)
+    
+    # only German verbs have conjugations included in the Lexicala API
+    if language == 'de':
+        conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
+        help_verb = get_help_verb(language, conjugates_with)
+        inflections = headword.get("inflections", [])
+        verb_conjugations = get_verb_conjugations(inflections, valency, help_verb)
+    else:
+        help_verb = None
+        verb_conjugations = {}
     return {"word": word, "valency": valency, "help_verb": help_verb, "conjugations": verb_conjugations}
     
 def get_definition_and_example(sense):
@@ -157,13 +166,13 @@ def call_api(url, headers, querystring):
 def get_definition(word, language="de"):
   
     load_dotenv(dotenv_path='Anki.env')
-    base_word = get_base_word(word,language)
-
+    #base_word = get_base_word(word,language)
+    #print(base_word)
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
 
     url = "https://lexicala1.p.rapidapi.com/search-entries"
-    querystring = {"text": base_word, "language": language, "analyzed": "true"}
+    querystring = {"text": word, "language": language, "analyzed": "true"}
     headers = {
         "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": RAPIDAPI_HOST
@@ -173,9 +182,8 @@ def get_definition(word, language="de"):
     entries = []
     if(isinstance(result, tuple)):
         response_results = result[1]
-       # print(response_results)
         results = response_results if (isinstance(response_results, list)) else [response_results]
-        
+        print(results)
         for result in results:
             word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
@@ -200,4 +208,4 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 # Test words in multiple languages
-get_definition("schleichen", "de")
+get_definition("estar", "es")
