@@ -5,13 +5,13 @@ import requests
 import spacy
 from dotenv import load_dotenv
 
-# Preload supported spaCy models
+# Constants and mapping
 SPACY_MODELS = {
     "de": spacy.load("de_core_news_sm"),  # German
     "sv": spacy.load('sv_core_news_sm'),
     "fr": spacy.load('fr_core_news_sm')
 }
-# the articles in the languages currently supported
+
 LANGUAGE_ARTICLES = {
     "de": {"feminine": "die", "masculine": "der", "neuter": "das"},
     "fr": {"feminine": "la", "masculine": "le"},
@@ -39,15 +39,31 @@ VALID_RESPONSE = "Valid Response"
 TIMEOUT = "Timeout"
 REQUEST_EXCEPTION = "Request Exception"
 
-def isNoun(headword):
+# Helper functions
+def is_noun(headword):
     return headword["pos"] == "noun"
 
-def isVerb(headword):
+def is_verb(headword):
     return headword["pos"] == "verb"
+
+def is_adjective(headword):
+    return headword["pos"] == "adjective"
 
 def get_article(gender, language):
     articles = LANGUAGE_ARTICLES.get(language, {})
     return articles.get(gender, "unknown gender") if articles else "Language currently not supported"
+
+def get_definition_and_example(sense):
+    definitions_and_examples = []
+    definition = sense.get('definition')
+    examples = sense.get('examples', [])
+
+    definitions_and_examples.append({
+        'definition': definition,
+        'examples': examples[0]["text"] if examples else ""
+    })
+
+    return definitions_and_examples
 
 def get_reflexive_article(person, language):
     articles = LANGUAGE_REFLEXIVE_PRONOUN.get(language, {})
@@ -73,6 +89,8 @@ def get_plural_form(inflections):
             plural_form = inflection["text"]
     return plural_form
 
+# Parsing different kinds of words (nouns, verbs, adjectives)
+
 def parse_noun_properties(headword, language):
     word = headword["text"]
     gender = headword.get("gender", "unknown")
@@ -89,7 +107,6 @@ def parse_noun_properties(headword, language):
 # I think it is because I call the wrong dictionary in get help verb conjugation
 def get_verb_conjugations(inflections, valency, help_verb):
     conjugations = {}
-    print(f"inflections is {inflections} \n")
     for inflection in inflections:
         
         conjugated_verb = inflection["text"]
@@ -129,18 +146,21 @@ def parse_verb_properties(headword, sense, language):
         verb_conjugations = {}
     return {"word": word, "valency": valency, "help_verb": help_verb, "conjugations": verb_conjugations}
     
-def get_definition_and_example(sense):
-    definitions_and_examples = []
-    definition = sense.get('definition')
-    examples = sense.get('examples', [])
 
-    definitions_and_examples.append({
-        'definition': definition,
-        'examples': examples[0]["text"] if examples else ""
-    })
+def parse_entry(headword, sense, language):
+    word_entry = {}
+    if (is_noun(headword)):
+        word_entry = parse_noun_properties(headword, language)
+    elif (is_verb(headword)):
+        word_entry = parse_verb_properties(headword, sense, language)
+    elif(is_adjective(headword)):
+        print("havent fixed adjective support yet")
+    else:
+        print(f"unidentified PoS: {headword["pos"]}")
+    word_entry["definitions_and_examples"] = get_definition_and_example(sense)
+    return word_entry
 
-    return definitions_and_examples
-
+# returns a token, and if succesful: also returns the response
 def call_api(url, headers, querystring):
     try: 
         response = requests.get(url, headers=headers, params=querystring, timeout=10)
@@ -166,13 +186,12 @@ def call_api(url, headers, querystring):
 def get_definition(word, language="de"):
   
     load_dotenv(dotenv_path='Anki.env')
-    #base_word = get_base_word(word,language)
-    #print(base_word)
+    base_word = get_base_word(word,language)
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
 
     url = "https://lexicala1.p.rapidapi.com/search-entries"
-    querystring = {"text": word, "language": language, "analyzed": "true"}
+    querystring = {"text": base_word, "language": language, "analyzed": "true"}
     headers = {
         "X-RapidAPI-Key": RAPIDAPI_KEY,
         "X-RapidAPI-Host": RAPIDAPI_HOST
@@ -188,14 +207,8 @@ def get_definition(word, language="de"):
             word_entry = {}
             headwords = result["headword"] if isinstance(result["headword"], list) else [result["headword"]]
             for sense in result["senses"]:
-                if(isNoun(headwords[0])):
-                    word_entry = parse_noun_properties(headwords[0], language)
-                if(isVerb(headwords[0])):
-                    word_entry = parse_verb_properties(headwords[0], sense, language)
-
-                word_entry["definitions_and_examples"] = get_definition_and_example(sense)
+                word_entry = parse_entry(headwords[0], sense, language)
                 entries.append(word_entry)
-    print(entries)
 
 def get_base_word(word, language):
     # Check if spaCy model for the language is loaded
@@ -208,4 +221,4 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 # Test words in multiple languages
-get_definition("estar", "es")
+get_definition("beau", "fr")
