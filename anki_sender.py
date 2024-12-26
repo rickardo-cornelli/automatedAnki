@@ -1,7 +1,22 @@
 import requests
-
+import base64
 # URL for AnkiConnect
 ANKI_CONNECT_URL = "http://localhost:8765"
+
+def store_audio_file(filename, file_path):
+    with open(file_path, "rb") as f:
+        data = base64.b64encode(f.read()).decode("utf-8")
+
+    request = {
+        "action": "store#MediaFile",
+        "version": 6,
+        "params": {
+            "filename": filename,
+            "data": data
+        }
+    }
+    response = requests.post(ANKI_CONNECT_URL, json=request)
+    return response.json()
 
 # This code was generated with chatgpt
 def add_card(card):

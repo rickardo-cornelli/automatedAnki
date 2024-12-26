@@ -12,3 +12,6 @@ __pycache__/
 # test files
 test.py
 test/
+
+# audio files
+audio/

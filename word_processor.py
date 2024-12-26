@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 # Constants and mapping
 SPACY_MODELS = {
     "de": spacy.load("de_core_news_sm"),  # German
-    "sv": spacy.load('sv_core_news_sm'),
-    "fr": spacy.load('fr_core_news_sm')
+    "fr": spacy.load('fr_core_news_sm'),
 }
 
 LANGUAGE_ARTICLES = {
