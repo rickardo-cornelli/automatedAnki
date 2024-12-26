@@ -3,6 +3,7 @@ import base64
 # URL for AnkiConnect
 ANKI_CONNECT_URL = "http://localhost:8765"
 
+# used to transfer an audio file to the local anki client
 def store_audio_file(filename, file_path):
     with open(file_path, "rb") as f:
         data = base64.b64encode(f.read()).decode("utf-8")
@@ -18,7 +19,6 @@ def store_audio_file(filename, file_path):
     response = requests.post(ANKI_CONNECT_URL, json=request)
     return response.json()
 
-# This code was generated with chatgpt
 def add_card(card):
    
     payload = {
@@ -37,7 +37,6 @@ def add_card(card):
 
 
 def add_cards_in_batch(cards):
-
     results = []
     for card in cards:
         try:

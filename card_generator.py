@@ -1,12 +1,9 @@
 from word_processor import get_base_word_in_sentence
 from gtts import gTTS
-import base64
-import requests
 import os
 
 
 AUDIO_DIR = "audio"
-
 
 if not os.path.exists(AUDIO_DIR):
     os.makedirs(AUDIO_DIR)
@@ -33,7 +30,7 @@ def audio_file_exists(word):
     file_path = f"audio/{word}.mp3"
     return os.path.exists(file_path)
 
-def get_audio(word, language="en"):
+def fetch_audio(word, language="en"):
 
     file_path = f"audio/{word}.mp3"
 
@@ -55,9 +52,9 @@ def generate_card(entry, deck_name, language, include_audio = True):
     example_with_word_highlighted = highlight_word_in_example(word, example, language)
     
     audio_data = {}
-    # Generate base64-encoded audio data
+
     if include_audio:
-        audio_data = get_audio(word, language)
+        audio_data = fetch_audio(word, language)
     
 
     word = highlight_word(word)
