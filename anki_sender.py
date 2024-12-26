@@ -29,7 +29,7 @@ def add_card(card):
         }
     }
     response = requests.post(ANKI_CONNECT_URL, json=payload)
-    response.raise_for_status()  # Raise an exception for HTTP errors
+    response.raise_for_status()
     result = response.json()
     if result.get("error"):
         raise Exception(f"Error adding card: {result['error']}")

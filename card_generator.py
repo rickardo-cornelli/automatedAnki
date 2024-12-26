@@ -11,7 +11,6 @@ if not os.path.exists(AUDIO_DIR):
 def highlight_word(word):
     return f"<span style='color: lightgreen;'>{word}</span>"
 
-# fix: for the example "the kinder spielen im hof", i get : "Example: Die Kind spielen im Hof."
 def highlight_word_in_example(word, example_sentence, language):
 
     if(not example_sentence):

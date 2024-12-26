@@ -1,4 +1,4 @@
-from word_processor import get_definition, get_base_word_in_sentence
+from word_processor import get_definition
 from card_generator import generate_card
 from anki_sender import add_card, add_cards_in_batch, store_audio_file
 
