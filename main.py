@@ -6,7 +6,7 @@ from anki_sender import add_card, add_cards_in_batch, store_media_file
 language = "fr"
 include_audio = True
 include_image = True
-entries = get_definition("voiture", language)
+entries = get_definition("homme", language)
 
 card, audio_data, image_data = generate_card(entries[0],"test",language, include_image, include_audio)
 

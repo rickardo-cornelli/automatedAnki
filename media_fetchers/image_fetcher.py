@@ -12,6 +12,9 @@ load_dotenv(env_path)
 
 IMAGES_DIR = "images"
 
+FETCH_REQUEST_EXCEPTION = "An error occured while trying to fetch the image"
+DOWNLOAD_REQUEST_EXCEPTION = "An error occured while trying to download the image"
+
 if not os.path.exists(IMAGES_DIR):
     os.makedirs(IMAGES_DIR)
 
@@ -46,11 +49,9 @@ def fetch_pixabay_images(query, api_key,lang):
         if int(data.get("totalHits", 0)) > 0:
             return [hit["previewURL"] for hit in data["hits"]]
         else:
-            print("No hits found for query:", query)
             return []
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching images: {e}")
-        return []
+        return FETCH_REQUEST_EXCEPTION
     
 def download_image(image_url, save_path):
     try:
@@ -63,7 +64,7 @@ def download_image(image_url, save_path):
         
         print(f"Image successfully downloaded to {save_path}")
     except requests.RequestException as e:
-        print(f"Error downloading image: {e}")
+        return DOWNLOAD_REQUEST_EXCEPTION
 
 
 
