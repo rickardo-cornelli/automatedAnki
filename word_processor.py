@@ -1,5 +1,3 @@
-import json
-import sys
 import os
 import requests
 import spacy
@@ -87,7 +85,6 @@ def get_plural_form(inflections):
             plural_form = inflection["text"]
     return plural_form
 
-# Parsing different kinds of words (nouns, verbs, adjectives)
 
 def parse_noun_properties(headword, language):
     word = headword["text"]

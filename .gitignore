@@ -13,5 +13,6 @@ __pycache__/
 test.py
 test/
 
-# audio files
+# media files
 audio/
+images/
