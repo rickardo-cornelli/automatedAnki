@@ -69,20 +69,20 @@ def download_image(image_url, save_path):
 
 
 def get_image(word, language="en"):
-    file_path = f"../images/{word}.mp3"
+    file_path = os.path.join(IMAGES_DIR, f"{word.replace(' ', '_')}.jpg")
 
     api_key = get_pixabay_api_key()
     if not image_file_exists(file_path):
         image_urls = fetch_pixabay_images(word, api_key, "de")
 
-        if image_urls:
+        if not image_urls:
+            print(f"No image found for {word}")
+            return
+        else:
         # Download the first image from the list
             first_image_url = image_urls[0]
-            save_path = os.path.join(IMAGES_DIR, f"{word.replace(' ', '_')}.jpg")
-            download_image(first_image_url, save_path)
-        else:
-            print(f"No image found for {word}")
-
+            download_image(first_image_url, file_path)
+    return {"filename": f"{word}.jpg", "filepath": file_path}
 
 if __name__ == "__main__":
     get_image("ninja")

@@ -8,6 +8,7 @@ ankiEnv/
 # python cache 
 __pycache__/
 *.pyc
+media_fetchers/__pycache__/
 
 # test files
 test.py

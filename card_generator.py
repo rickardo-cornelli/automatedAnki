@@ -1,4 +1,5 @@
 from word_processor import get_base_word_in_sentence
+from media_fetchers.image_fetcher import get_image
 from gtts import gTTS
 import os
 
@@ -40,7 +41,7 @@ def fetch_audio(word, language="en"):
     return {"filename": f"{word}.mp3", "filepath": file_path}
 
 
-def generate_card(entry, deck_name, language, include_audio = True):
+def generate_card(entry, deck_name, language, include_image=True, include_audio = True):
     word = entry["word"]
     
 
@@ -51,11 +52,12 @@ def generate_card(entry, deck_name, language, include_audio = True):
     example_with_word_highlighted = highlight_word_in_example(word, example, language)
     
     audio_data = {}
-
+    image_data = {}
     if include_audio:
         audio_data = fetch_audio(word, language)
     
-
+    if include_image:
+        image_data = get_image(word,language)
     word = highlight_word(word)
     if entry["type"] == "noun":
         word = highlight_word(entry["article"]) + " " + word
@@ -66,7 +68,7 @@ def generate_card(entry, deck_name, language, include_audio = True):
         "modelName": "Basic",
         "fields": {
             "Front": f"{example_with_word_highlighted}",
-            "Back": f"{word} = {definition}" + (f"<br>[sound:{audio_data['filename']}]" if include_audio else ""),
+            "Back": f"{word} = {definition}" + (f"<br>[sound:{audio_data['filename']}]" if include_audio else "") + (f'<br><img src="{image_data["filename"]}">' if include_image else ""),
         },
         "tags": ["language", language],
         "options": {
@@ -74,5 +76,5 @@ def generate_card(entry, deck_name, language, include_audio = True):
         },
        
     }
-    return anki_card, audio_data
+    return anki_card, audio_data, image_data
 

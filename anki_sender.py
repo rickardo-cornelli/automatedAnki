@@ -4,12 +4,12 @@ import base64
 ANKI_CONNECT_URL = "http://localhost:8765"
 
 # used to transfer an audio file to the local anki client
-def store_audio_file(filename, file_path):
+def store_media_file(filename, file_path):
     with open(file_path, "rb") as f:
         data = base64.b64encode(f.read()).decode("utf-8")
 
     request = {
-        "action": "store#MediaFile",
+        "action": "storeMediaFile",
         "version": 6,
         "params": {
             "filename": filename,
