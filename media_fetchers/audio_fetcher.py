@@ -4,7 +4,7 @@ import os
 
 AUDIO_DIR = "audio"
 
-if not os.path.exists(AUDIO_DIR):
+if (not os.path.exists(AUDIO_DIR)):
     os.makedirs(AUDIO_DIR)
 
 

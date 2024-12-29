@@ -132,7 +132,7 @@ def parse_verb_properties(headword, sense, language):
     word = get_reflexive_article("3rd", language) + word if valency == "reflexive" else word
     
     # only German verbs have verb conjugations included in the Lexicala API
-    if language == 'de':
+    if (language == 'de'):
         conjugates_with = headword.get("range_of_application") or sense.get("range_of_application")
         help_verb = get_help_verb(language, conjugates_with)
         inflections = headword.get("inflections", [])
@@ -168,7 +168,7 @@ def call_api(url, headers, querystring):
         
         response_data = response.json()
 
-        if not response_data["results"]:
+        if (not response_data["results"]):
             return INVALID_RESPONSE
         
         return VALID_RESPONSE, response_data["results"]
@@ -209,7 +209,7 @@ def get_definition(word, language="de"):
     return entries
 
 def get_base_word(word, language):
-    if language in SPACY_MODELS:
+    if (language in SPACY_MODELS):
         nlp = SPACY_MODELS[language]
         doc = nlp(word)
         for token in doc:
@@ -218,12 +218,12 @@ def get_base_word(word, language):
         return f"spaCy model not available for language '{language}'"
 
 def get_base_word_in_sentence(sentence, base_word, language):
-    if language in SPACY_MODELS:
+    if (language in SPACY_MODELS):
         nlp = SPACY_MODELS[language]
         doc = nlp(sentence)
 
         for token in doc:
-            if token.lemma_ == base_word:
+            if (token.lemma_ == base_word):
                 return token.text
     
     return None

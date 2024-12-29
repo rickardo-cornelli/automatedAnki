@@ -27,7 +27,7 @@ def image_file_exists(file_path):
 
 def fetch_pixabay_images(query, api_key,lang):
     
-    if not api_key:
+    if (not api_key):
         print("Error: Pixabay API key not found in Anki.env.")
         return
     
@@ -46,7 +46,7 @@ def fetch_pixabay_images(query, api_key,lang):
         data = response.json()
 
         # Check total hits and extract image URLs
-        if int(data.get("totalHits", 0)) > 0:
+        if (int(data.get("totalHits", 0)) > 0):
             return [hit["previewURL"] for hit in data["hits"]]
         else:
             return []
@@ -73,10 +73,10 @@ def get_image(word, language="en"):
     file_path = os.path.join(IMAGES_DIR, f"{word.replace(' ', '_')}.jpg")
 
     api_key = get_pixabay_api_key()
-    if not image_file_exists(file_path):
+    if (not image_file_exists(file_path)):
         image_urls = fetch_pixabay_images(word, api_key, "de")
 
-        if not image_urls:
+        if (not image_urls):
             print(f"No image found for {word}")
             return
         else:

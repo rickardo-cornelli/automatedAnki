@@ -1,16 +1,13 @@
 from word_processor import get_base_word_in_sentence
 from media_fetchers.image_fetcher import get_image
 from media_fetchers.audio_fetcher import fetch_audio
-from gtts import gTTS
-import os
-
 
 def highlight_word(word):
     return f"<span style='color: lightgreen;'>{word}</span>"
 
 def highlight_word_in_example(word, example_sentence, language):
 
-    if(not example_sentence):
+    if (not example_sentence):
         highlighted_word = highlight_word(word)
         return highlighted_word
     
@@ -35,13 +32,13 @@ def generate_card(entry, deck_name, language, include_image=True, include_audio 
     
     audio_data = {}
     image_data = {}
-    if include_audio:
+    if (include_audio):
         audio_data = fetch_audio(word, language)
     
-    if include_image:
+    if (include_image):
         image_data = get_image(word,language)
     word = highlight_word(word)
-    if entry["type"] == "noun":
+    if (entry["type"] == "noun"):
         word = highlight_word(entry["article"]) + " " + word
 
     anki_card =  {
