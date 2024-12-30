@@ -10,7 +10,7 @@ load_dotenv("../Anki.env")
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Anki.env")
 load_dotenv(env_path)
 
-IMAGES_DIR = "images"
+IMAGES_DIR = "media/images"
 
 FETCH_REQUEST_EXCEPTION = "An error occured while trying to fetch the image"
 DOWNLOAD_REQUEST_EXCEPTION = "An error occured while trying to download the image"

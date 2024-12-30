@@ -2,7 +2,7 @@ from gtts import gTTS
 import os
 
 
-AUDIO_DIR = "audio"
+AUDIO_DIR = "media/audio"
 
 if (not os.path.exists(AUDIO_DIR)):
     os.makedirs(AUDIO_DIR)

@@ -1,6 +1,6 @@
-from word_processor import get_base_word_in_sentence
-from media_fetchers.image_fetcher import get_image
-from media_fetchers.audio_fetcher import fetch_audio
+from src.word_processor import get_base_word_in_sentence
+from src.media_fetchers.image_fetcher import get_image
+from src.media_fetchers.audio_fetcher import fetch_audio
 
 def highlight_word(word):
     return f"<span style='color: lightgreen;'>{word}</span>"
