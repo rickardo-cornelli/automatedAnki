@@ -156,7 +156,10 @@ def parse_entry(headword, sense, language):
     word_entry["definition_and_example"] = get_definition_and_example(sense)
     return word_entry
 
-# returns a token, and if succesful: also returns the response
+"""
+    Calls the lexicala api with the parameters given from get_definition
+    Returns a token and if succesful, also returns a result
+"""
 def call_api(url, headers, querystring):
     try: 
         response = requests.get(url, headers=headers, params=querystring, timeout=10)

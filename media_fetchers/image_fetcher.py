@@ -62,8 +62,7 @@ def download_image(image_url, save_path):
             for chunk in response.iter_content(1024):
                 file.write(chunk)
         
-        print(f"Image successfully downloaded to {save_path}")
-    except requests.RequestException as e:
+    except requests.RequestException:
         return DOWNLOAD_REQUEST_EXCEPTION
 
 
@@ -84,6 +83,3 @@ def get_image(word, language="en"):
             first_image_url = image_urls[0]
             download_image(first_image_url, file_path)
     return {"filename": f"{word}.jpg", "filepath": file_path}
-
-if __name__ == "__main__":
-    get_image("ninja")
