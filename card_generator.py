@@ -47,13 +47,17 @@ def generate_card(entry, deck_name, language, include_image=True, include_audio 
         "modelName": "Basic",
         "fields": {
             "Front": f"{example_with_word_highlighted}",
-            "Back": f"{word} = {definition}" + (f"<br>[sound:{audio_data['filename']}]" if include_audio else "") + (f'<br><img src="{image_data["filename"]}">' if include_image else ""),
+            "Back": f"{word} = {definition}"
         },
         "tags": ["language", language],
         "options": {
             "allowDuplicate": False,
         },
-       
     }
+
+    if (include_audio and audio_data):
+        anki_card["fields"]["Back"] += f"<br>[sound:{audio_data['filename']}]"
+    if(include_image and image_data):
+        anki_card["fields"]["Back"] += f'<br><img src="{image_data["filename"]}">'
     return anki_card, audio_data, image_data
 

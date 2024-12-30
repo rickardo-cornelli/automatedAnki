@@ -183,6 +183,7 @@ def get_definition(word, language="de"):
   
     load_dotenv(dotenv_path='Anki.env')
     base_word = get_base_word(word,language)
+    print(f"base word is {base_word}")
     RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
     RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST')
 
